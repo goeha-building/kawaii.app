@@ -11,6 +11,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
         body { font-family: 'Pretendard', sans-serif; background-color: #020617; overflow: hidden; }
+        /* 다시 거울 모드로 복구 (사용자에게 익숙한 방향) */
         video, canvas { transform: rotateY(180deg); object-fit: cover; }
         .timer-font { font-family: monospace; }
         .flash-active { animation: flash-anim 0.2s ease-out; }
@@ -29,24 +30,210 @@
             <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl text-left space-y-4 mb-8 shadow-2xl">
                 <p class="text-slate-300">디지털 중독으로 <span class="text-rose-500 font-bold">'틀딱'</span>이 되어가고 계십니까?</p>
                 <p class="text-slate-300">1분도 소요되지 않는 간단한 테스트로 <span class="text-rose-500 font-bold">뇌손상</span>을 예방하십시오.</p>
-                <p class="text-slate-300"><span class="text-rose-500 font-bold">효과 : </span>테스토스테론 폭발 및 알파메일/피메일 등극.</p>
-                <p class="text-xs text-slate-500 text-center border-t border-slate-800 pt-4">* PC 환경 권장 (거울 모드로 작동합니다)</p>
-            </div>
-            <button id="start-btn" class="px-20 py-6 bg-sky-600 rounded-full text-2xl font-black hover:bg-sky-500 transition-all shadow-xl">테스트 시작</button>
+                <p class="text-slate-300"><span class="text-rose-500 font-bold">효과 : </span>자신감이 오르고 신체가 건강해지며 테스토스테론이 폭발해 알파메일/피메일이 된다.</p>
+                <p class="text-slate-300">화면에 나오는 지시사항을 <strong>사용자의 왼쪽/오른쪽 기준</strong>으로 빠르게 수행해주십시오.</p>
+                <p class="text-xs text-slate-500 text-center border-t border-slate-800 pt-4">* PC 환경 권장 (거울 모드가 아닌 실제 방향대로 움직이세요)</p>            </div>
+            <button id="start-btn" class="px-20 py-6 bg-sky-600 rounded-full text-2xl font-black hover:bg-sky-500 transition-all hover:scale-105 shadow-[0_10px_40px_rgba(2,132,199,0.5)]">
+                테스트 시작
+            </button>
         </div>
     </div>
 
     <div id="app-container" class="hidden relative w-full h-full bg-black">
         <video id="webcam" class="absolute inset-0 w-full h-full" autoplay playsinline></video>
         <canvas id="output_canvas" class="absolute inset-0 w-full h-full z-10 pointer-events-none opacity-40"></canvas>
+        
         <div id="sticker-layer" class="absolute inset-0 z-40 pointer-events-none"></div>
+
         <div class="absolute top-10 left-0 right-0 z-20 flex flex-col items-center pointer-events-none px-4">
             <div id="stage-info" class="text-sky-400 font-black text-2xl mb-2 tracking-[0.3em] uppercase opacity-80">Stage 0</div>
-            <div id="instruction-box" class="bg-black/70 backdrop-blur-2xl border border-white/20 px-12 py-6 rounded-[3rem] text-4xl font-black text-center max-w-full shadow-2xl">L O A D I N G . . .</div>
-            <div id="timer" class="mt-6 text-5xl font-black timer-font text-white/50">00.00s</div>
+            <div id="instruction-box" class="bg-black/70 backdrop-blur-2xl border border-white/20 px-12 py-6 rounded-[3rem] text-4xl font-black text-center max-w-full shadow-2xl transition-all duration-300">
+                L O A D I N G . . .
+            </div>
+            <div id="timer" class="mt-6 text-5xl font-black timer-font text-white/50 tracking-tighter">00.00s</div>
         </div>
+
+        <div id="fail-stack" class="absolute top-10 left-10 z-20 flex gap-2 text-6xl text-rose-600 font-black"></div>
         <div id="flash" class="absolute inset-0 bg-white opacity-0 z-[100] pointer-events-none"></div>
     </div>
 
     <div id="result-modal" class="hidden fixed inset-0 z-[200] bg-slate-950/98 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border
+        <div class="bg-slate-900 border border-white/10 p-10 rounded-[4rem] max-w-5xl w-full relative shadow-[0_0_150px_rgba(56,189,248,0.2)]">
+            
+            <div class="absolute -top-20 -right-16 w-56 h-56 hamster-laugh z-[210]">
+                <img src="https://i.imgur.com/vH0HjD7.png" id="laugh-img" class="w-full h-full rounded-full border-8 border-rose-500 shadow-2xl" alt="비웃는 햄스터">
+            </div>
+            
+            <div class="flex flex-col md:flex-row gap-12 items-center">
+                <div class="flex-1 relative">
+                    <div class="absolute -top-6 -left-6 bg-rose-500 text-white px-6 py-2 font-black rounded-2xl z-10 animate-bounce tracking-tight text-xl">그렇게 귀여워지고 싶었니?</div>
+                    <img id="result-image" class="w-full rounded-[2.5rem] border-4 border-sky-500 shadow-3xl">
+                </div>
+                
+                <div class="flex-1 text-center md:text-left">
+                    <h3 id="result-title" class="text-4xl font-black text-white mb-4 italic uppercase">오잉?? 귀여운 표정의 애교쟁이 적발 📸</h3>
+                    <p id="result-desc1" class="text-slate-400 mb-8 text-lg">뇌건강 테스트를 하랬더만<span class="text-sky-400 font-bold">'기습 필살 애교'</span> 를 부리다니...당차십니다.</p>
+                    <p id="result-desc2" class="text-slate-400 mb-8 text-lg">당신은 제정신이 아닙니다. 이게 뭐하는 짓입니까?</p>
+                    <p id="result-desc3" class="text-slate-400 mb-8 text-lg">당신은 <span class="text-sky-400 font-bold">'테토'도, '알파'도 아닙니다.</span> 그저 초 카와이 애교쟁이로 전락해버렸습니다.</p>
+                    
+                    <div class="grid grid-cols-1 gap-4">
+                        <a id="save-btn" class="py-5 bg-sky-600 text-white rounded-[1.5rem] font-black text-2xl text-center hover:bg-sky-400 transition-all shadow-lg active:scale-95">사진 저장</a>
+                        <a href="mailto:goeha1379@gmail.com" class="py-5 bg-slate-800 text-slate-300 rounded-[1.5rem] font-black text-xl text-center hover:bg-slate-700 transition-all">💌 제작자에게 자랑하기</a>
+                        <button id="angry-btn" class="py-5 border-2 border-rose-500/50 text-rose-400 rounded-[1.5rem] font-black text-xl hover:bg-rose-500/20 transition-all">이 굴욕을 제작자에게 앙갚음하기</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // 핵심 수정: 변수들을 최상단에 먼저 선언해서 버튼이 즉시 인식되게 함
+        let currentHands = []; 
+        let currentFace = null;
+        let currentStage = 1;
+        let currentProblem = 0;
+        let startTime = 0;
+        let isProblemActive = false;
+        let isFinalStage = false;
+        let isAngryMode = false;
+
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('output_canvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('start-btn');
+        const startScreen = document.getElementById('start-screen');
+        const appContainer = document.getElementById('app-container');
+        const instructionBox = document.getElementById('instruction-box');
+        const timerDisplay = document.getElementById('timer');
+        const stickerLayer = document.getElementById('sticker-layer');
+        const resultModal = document.getElementById('result-modal');
+        const resultImage = document.getElementById('result-image');
+        const flash = document.getElementById('flash');
+
+        const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+        hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.8, minTrackingConfidence: 0.8 });
+        const faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
+        faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.8, minTrackingConfidence: 0.8 });
+
+        const stages = [
+            { name: "Stage 1: 기초 반응", problems: [
+                { text: "'오른쪽' 귀 옆에 브이를 하세요.", check: (h, f) => h.some(hand => hand.side==='Right' && hand.v && Math.hypot(hand.pos[8].x - f[234].x, hand.pos[8].y - f[234].y) < 0.12) },
+                { text: "고개를 '왼쪽'으로 45도 기울이세요.", check: (h, f) => (f[1].x - f[152].x) > 0.05 }
+            ]},
+            { name: "Stage 2: 가속 테스트", problems: [
+                { text: "오른손 브이를 하며 고개를 오른쪽으로 기울이세요.", check: (h, f) => h.some(hand => hand.v) && (f[1].x - f[152].x) < -0.05 }
+            ]},
+            { name: "Final Stage: 뉴런 폭발", problems: [
+                { text: "오른손 검지손가락으로 볼 찌르기 + 왼손 브이 + 오른쪽으로 고개 기울이기 + 왼쪽 눈 감기 + 혀 내밀기", isFinal: true, check: (h, f) => {
+                    const hasV = h.some(hand => hand.v);
+                    const hasCheek = h.some(hand => Math.hypot(hand.pos[8].x - f[234].x, hand.pos[8].y - f[234].y) < 0.1 || Math.hypot(hand.pos[8].x - f[454].x, hand.pos[8].y - f[454].y) < 0.1);
+                    const isTilt = Math.abs(f[1].x - f[152].x) > 0.04;
+                    const leftEyeHeight = Math.abs(f[159].y - f[145].y);
+                    const rightEyeHeight = Math.abs(f[386].y - f[374].y);
+                    const isWink = (leftEyeHeight < 0.016 || rightEyeHeight < 0.016);
+                    const isTongue = Math.abs(f[13].y - f[14].y) > 0.04;
+                    return hasV && hasCheek && isTilt && isWink && isTongue;
+                }}
+            ]}
+        ];
+
+        function spawnStickers() {
+            stickerLayer.innerHTML = '';
+            const emojis = ['❤️', '⭐', '✨', '💖', '🌸', '🍭', '🎀', '🍬'];
+            for(let i=0; i<20; i++) {
+                const s = document.createElement('div');
+                s.className = 'sticker';
+                s.innerText = emojis[Math.floor(Math.random()*emojis.length)];
+                s.style.left = Math.random()*90 + '%';
+                s.style.top = Math.random()*90 + '%';
+                s.style.transform = `rotate(${Math.random()*360}deg)`;
+                stickerLayer.appendChild(s);
+            }
+        }
+
+        function capturePhoto() {
+            flash.classList.add('flash-active');
+            setTimeout(() => flash.classList.remove('flash-active'), 200);
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = video.videoWidth; tempCanvas.height = video.videoHeight;
+            const tCtx = tempCanvas.getContext('2d');
+            tCtx.translate(tempCanvas.width, 0); tCtx.scale(-1, 1);
+            tCtx.drawImage(video, 0, 0);
+            tCtx.setTransform(1, 0, 0, 1, 0, 0);
+            tCtx.font = "80px Arial";
+            for(let i=0; i<15; i++) {
+                tCtx.fillText(['❤️','✨','💖','⭐'][Math.floor(Math.random()*4)], Math.random()*tempCanvas.width, Math.random()*tempCanvas.height);
+            }
+            const dataUrl = tempCanvas.toDataURL('image/png');
+            resultImage.src = dataUrl;
+            document.getElementById('save-btn').href = dataUrl;
+            document.getElementById('save-btn').download = "my_cute_brain_result.png";
+            resultModal.classList.remove('hidden');
+        }
+
+        function nextProblem() {
+            isProblemActive = false;
+            if (currentStage > stages.length) return;
+            if (currentProblem >= stages[currentStage-1].problems.length) {
+                currentStage++; currentProblem = 0;
+            }
+            if (currentStage > stages.length) return;
+            const prob = stages[currentStage-1].problems[currentProblem];
+            document.getElementById('stage-info').innerText = stages[currentStage-1].name;
+            instructionBox.innerText = prob.text;
+            setTimeout(() => { startTime = Date.now(); isProblemActive = true; if(prob.isFinal) isFinalStage = true; }, 500);
+        }
+
+        hands.onResults(results => {
+            currentHands = (results.multiHandLandmarks || []).map((lm, i) => ({
+                pos: lm, side: results.multiHandedness[i].label,
+                v: lm[8].y < lm[6].y && lm[12].y < lm[10].y && lm[16].y > lm[14].y,
+                fuck: lm[12].y < lm[10].y && lm[8].y > lm[6].y && lm[16].y > lm[14].y
+            }));
+            checkLogic();
+        });
+        faceMesh.onResults(results => { currentFace = (results.multiFaceLandmarks || [])[0]; checkLogic(); });
+
+        function checkLogic() {
+            if (!isProblemActive || !currentFace) return;
+            if (isAngryMode) {
+                if (currentHands.some(h => h.fuck)) {
+                    isProblemActive = false; spawnStickers();
+                    document.getElementById('result-title').innerHTML = "저는 귀염둥이에용💖💖💖 화 안났어용✨";
+                    capturePhoto();
+                }
+                return;
+            }
+            const prob = stages[currentStage-1].problems[currentProblem];
+            if (prob && prob.check(currentHands, currentFace)) {
+                isProblemActive = false;
+                if (prob.isFinal) {
+                    instructionBox.innerText = "저는 세상에서 제일 귀엽습니다앙✨✨";
+                    spawnStickers();
+                    setTimeout(capturePhoto, 800);
+                } else {
+                    currentProblem++; nextProblem();
+                }
+            }
+            timerDisplay.innerText = ((Date.now() - startTime)/1000).toFixed(2) + "s";
+        }
+
+        startBtn.onclick = async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+                startScreen.classList.add('hidden'); appContainer.classList.remove('hidden');
+                async function loop() { await hands.send({image: video}); await faceMesh.send({image: video}); requestAnimationFrame(loop); }
+                loop(); nextProblem();
+            } catch (err) {
+                alert("카메라 권한을 허용해주세요!");
+            }
+        };
+
+        document.getElementById('angry-btn').onclick = () => {
+            resultModal.classList.add('hidden'); isAngryMode = true; isProblemActive = true;
+            instructionBox.innerText = "제작자에게 중지손가락을 날려 분노를 표출하십시오.";
+        };
+    </script>
+</body>
+</html>
