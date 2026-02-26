@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kawaii Vision AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+    <style>
+        .overlay-text { font-family: 'Pretendard', sans-serif; transition: all 0.3s; }
+        video, canvas { transform: rotateY(180deg); }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div id="start-screen" class="text-center">
+        <h1 class="text-5xl font-black mb-8 text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-500">
+            Kawaii Vision AI
+        </h1>
+        <button id="start-btn" class="px-10 py-4 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full text-xl font-bold hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-pink-500/20">
+            카메라 시작하기
+        </button>
+    </div>
+
+    <div id="app-container" class="hidden relative w-full max-w-4xl">
+        <video id="webcam" class="w-full rounded-2xl border-4 border-pink-500/30 shadow-2xl" autoplay playsinline></video>
+        <canvas id="output_canvas" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
+        
+        <div id="status-overlay" class="absolute top-5 right-5 flex flex-col items-end gap-2">
+            <div id="v-label" class="hidden text-4xl font-bold text-white/60 bg-pink-500/20 px-4 py-2 rounded-lg border border-white/10">브이~ ✌️</div>
+            <div id="wink-label" class="hidden text-4xl font-bold text-white/60 bg-yellow-500/20 px-4 py-2 rounded-lg border border-white/10">윙크~ 😉</div>
+        </div>
+    </div>
+
+    <script type="module">
+        const videoElement = document.getElementById('webcam');
+        const canvasElement = document.getElementById('output_canvas');
+        const canvasCtx = canvasElement.getContext('2d');
+        const startBtn = document.getElementById('start-btn');
+        const startScreen = document.getElementById('start-screen');
+        const appContainer = document.getElementById('app-container');
+        
+        const vLabel = document.getElementById('v-label');
+        const winkLabel = document.getElementById('wink-label');
+
+        // 핸드 트래킹 설정
+        const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+        hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+
+        // 페이스 메쉬 설정
+        const faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
+        faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+
+        function onResults(results) {
+            canvasElement.width = videoElement.videoWidth;
+            canvasElement.height = videoElement.videoHeight;
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            
+            // 핸드 트래킹 처리 & 브이 체크
+            let isV = false;
+            if (results.multiHandLandmarks) {
+                for (const landmarks of results.multiHandLandmarks) {
+                    drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: '#ec4899', lineWidth: 5});
+                    drawLandmarks(canvasCtx, landmarks, {color: '#ffffff', lineWidth: 2});
+                    
+                    // 검지(8), 중지(12) 펴짐 & 약지(16), 소지(20) 접힘 판단 (간이 로직)
+                    if (landmarks[8].y < landmarks[6].y && landmarks[12].y < landmarks[10].y && 
+                        landmarks[16].y > landmarks[14].y && landmarks[20].y > landmarks[18].y) {
+                        isV = true;
+                    }
+                }
+            }
+            vLabel.classList.toggle('hidden', !isV);
+            canvasCtx.restore();
+        }
+
+        function onFaceResults(results) {
+            let isWinking = false;
+            if (results.multiFaceLandmarks) {
+                for (const landmarks of results.multiFaceLandmarks) {
+                    // 왼쪽 눈(159, 145), 오른쪽 눈(386, 374) 거리 계산으로 윙크 감지 (간이)
+                    const leftEye = Math.abs(landmarks[159].y - landmarks[145].y);
+                    const rightEye = Math.abs(landmarks[386].y - landmarks[374].y);
+                    if ((leftEye < 0.015 && rightEye > 0.025) || (rightEye < 0.015 && leftEye > 0.025)) {
+                        isWinking = true;
+                    }
+                }
+            }
+            winkLabel.classList.toggle('hidden', !isWinking);
+        }
+
+        hands.onResults(onResults);
+        faceMesh.onResults(onFaceResults);
+
+        startBtn.addEventListener('click', async () => {
+            startScreen.classList.add('hidden');
+            appContainer.classList.remove('hidden');
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            videoElement.srcObject = stream;
+            
+            async function detectionLoop() {
+                await hands.send({image: videoElement});
+                await faceMesh.send({image: videoElement});
+                requestAnimationFrame(detectionLoop);
+            }
+            detectionLoop();
+        });
+    </script>
+</body>
+</html>
