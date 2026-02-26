@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 기반 뇌 연령 및 순발력 테스트</title>
+    <title>AI가 알려주는 뇌건강 순발력 테스트</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
@@ -26,11 +26,13 @@
     <div id="start-screen" class="absolute inset-0 z-[100] bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
         <div class="max-w-2xl">
             <h1 class="text-5xl font-black mb-4 tracking-tighter text-white">🧠 나의 뇌 나이는 몇 살?</h1>
-            <h2 class="text-xl text-sky-400 font-bold mb-8 italic">실시간 AI 순발력 및 뉴런 활성화 테스트</h2>
+            <h2 class="text-xl text-sky-400 font-bold mb-8 italic">실시간 뉴런 활성화 테스트</h2>
             <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl text-left space-y-4 mb-8 shadow-2xl">
-                <p class="text-slate-300">디지털 중독으로 <span class="text-rose-500 font-bold">'틀딱'</span>화 되어가는 뇌를 테스트하세요.</p>
-                <p class="text-slate-300">화면에 나오는 지시사항을 <strong>사용자의 왼쪽/오른쪽 기준</strong>으로 빠르게 수행해야 합니다.</p>
-                <p class="text-xs text-slate-500 text-center border-t border-slate-800 pt-4">* PC 환경 권장 (거울 모드가 아닙니다. 실제 방향대로 움직이세요!)</p>
+                <p class="text-slate-300">디지털 중독으로 <span class="text-rose-500 font-bold">'틀딱'</span>이 되어가고 계십니까?</p>
+                <p class="text-slate-300">1분도 소요되지 않는 간단한 테스트로 <span class="text-rose-500 font-bold">뇌손상</span>을 예방하십시오.</p>
+                <p class="text-slate-300"><span class="text-rose-500 font-bold">효과 : </span>자신감이 오르고 신체가 건강해지며 테스토스테론이 뿜뿜 나오고 알파메일/피메일이 된다.</p>
+                <p class="text-slate-300">화면에 나오는 지시사항을 <strong>사용자의 왼쪽/오른쪽 기준</strong>으로 빠르게 수행해주십시오.</p>
+                <p class="text-xs text-slate-500 text-center border-t border-slate-800 pt-4">* PC 환경 권장 (거울 모드가 아닌 실제 방향대로 움직이세요)</p>
             </div>
             <button id="start-btn" class="px-16 py-5 bg-sky-600 rounded-full text-2xl font-black hover:bg-sky-500 transition-all shadow-xl">테스트 시작</button>
         </div>
@@ -63,12 +65,14 @@
                     <img id="result-image" class="w-full rounded-3xl border-4 border-sky-500">
                 </div>
                 <div class="flex-1 text-center md:text-left">
-                    <h3 id="result-title" class="text-4xl font-black text-white mb-4 italic uppercase">애교쟁이 적발! 📸</h3>
-                    <p id="result-desc" class="text-slate-400 mb-8 text-lg">측정 결과: 당신의 뇌는 <span class="text-sky-400 font-bold">말랑말랑한 귀염둥이</span> 상태입니다.</p>
+                    <h3 id="result-title" class="text-4xl font-black text-white mb-4 italic uppercase">오잉?? 귀여운 표정의 애교쟁이 적발 📸</h3>
+                    <p id="result-desc" class="text-slate-400 mb-8 text-lg">뇌건강 테스트를 하랬더만<span class="text-sky-400 font-bold">'기습 필살 애교'</span> 를 부리다니...당차십니다.</p>
+                    <p id="result-desc" class="text-slate-400 mb-8 text-lg">당신은 제정신이 아닙니다. 이게 뭐하는 짓입니까?</p>
+                    <p id="result-desc" class="text-slate-400 mb-8 text-lg">당신은 <span class="text-sky-400 font-bold">'테토'도, '알파'도 아닙니다.</span> 그저 초 카와이 애교쟁이로 전락해버렸습니다.</p>
                     <div class="flex flex-col gap-3">
-                        <a id="save-btn" class="w-full py-4 bg-sky-600 text-white rounded-2xl font-bold text-center">📸 사진 저장하기</a>
+                        <a id="save-btn" class="w-full py-4 bg-sky-600 text-white rounded-2xl font-bold text-center">사진 저장</a>
                         <a href="mailto:goeha1379@gmail.com" class="w-full py-4 bg-slate-800 text-slate-300 rounded-2xl font-bold text-center">💌 제작자에게 자랑하기</a>
-                        <button id="angry-btn" class="w-full py-4 border-2 border-rose-500/50 text-rose-400 rounded-2xl font-bold">💢 제작자에게 분노의 빠큐 날리기</button>
+                        <button id="angry-btn" class="w-full py-4 border-2 border-rose-500/50 text-rose-400 rounded-2xl font-bold">이 굴욕을 제작자에게 앙갚음하기</button>
                     </div>
                 </div>
             </div>
@@ -102,14 +106,14 @@
 
         const stages = [
             { name: "Stage 1", problems: [
-                { text: "사용자 기준 '오른쪽' 귀 옆에 브이를 하세요.", check: (h, f) => h.some(hand => hand.side==='Right' && hand.v && Math.hypot(hand.pos[8].x - f[454].x, hand.pos[8].y - f[454].y) < 0.12) },
-                { text: "고개를 '왼쪽'으로 기울이세요.", check: (h, f) => (f[1].x - f[152].x) < -0.06 }
+                { text: '오른쪽' 귀 옆에 브이 하세요.", check: (h, f) => h.some(hand => hand.side==='Right' && hand.v && Math.hypot(hand.pos[8].x - f[454].x, hand.pos[8].y - f[454].y) < 0.12) },
+                { text: "고개를 '왼쪽'으로 45도 기울이세요.", check: (h, f) => (f[1].x - f[152].x) < -0.06 }
             ]},
             { name: "Stage 2", problems: [
                 { text: "오른손 브이를 하며 고개를 오른쪽으로 기울이세요.", check: (h, f) => h.some(hand => hand.side==='Right' && hand.v) && (f[1].x - f[152].x) > 0.06 }
             ]},
             { name: "Final Stage", problems: [
-                { text: "볼콕 + 왼손 브이 + 오른쪽 갸우뚱 + 윙크 + 혀 내밀기", isFinal: true, check: (h, f) => {
+                { text: "오른손 검지손가락으로 볼 찌르기 + 왼손 브이 + 오른쪽으로 고개 기울이기 + 왼쪽 눈 감기 + 혀 내밀기", isFinal: true, check: (h, f) => {
                     const hasV = h.some(hand => hand.side==='Left' && hand.v);
                     const hasCheek = h.some(hand => Math.hypot(hand.pos[8].x - f[234].x, hand.pos[8].y - f[234].y) < 0.08 || Math.hypot(hand.pos[8].x - f[454].x, hand.pos[8].y - f[454].y) < 0.08);
                     const isTilt = (f[1].x - f[152].x) > 0.05;
@@ -188,7 +192,7 @@
             if (isAngryMode) {
                 if (currentHands.some(h => h.fuck)) {
                     isProblemActive = false; spawnStickers();
-                    document.getElementById('result-title').innerText = "저는 귀염둥이에용 💖";
+                    document.getElementById('result-title').innerText = "저는 귀염둥이에용💖💖💖 화 안났어용✨";
                     capturePhoto();
                 }
                 return;
@@ -197,7 +201,7 @@
             if (prob.check(currentHands, currentFace)) {
                 isProblemActive = false;
                 if (prob.isFinal) {
-                    instructionBox.innerText = "내 애교 어때? 뿌잉뿌잉 ✨";
+                    instructionBox.innerText = "저는 세상에서 제일 귀엽습니다앙✨✨";
                     spawnStickers();
                     setTimeout(capturePhoto, 800);
                 } else {
@@ -217,7 +221,7 @@
 
         document.getElementById('angry-btn').onclick = () => {
             resultModal.classList.add('hidden'); isAngryMode = true; isProblemActive = true;
-            instructionBox.innerText = "분노 감지 중... 제작자에게 빠큐를 날리세요!";
+            instructionBox.innerText = "제작자에게 중지손가락을 날려 분노를 표출하십시오.";
         };
     </script>
 </body>
