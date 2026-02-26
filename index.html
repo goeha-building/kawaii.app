@@ -3,54 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kawaii Vision AI - Sticker Photo</title>
+    <title>SkyVision AI Studio</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
+        body { font-family: 'Pretendard', sans-serif; background-color: #020617; }
         video, canvas { transform: rotateY(180deg); }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #ec4899; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #38bdf8; border-radius: 10px; }
+        .filter-emoji { position: absolute; font-size: 80px; pointer-events: none; z-index: 40; transition: all 0.2s; }
     </style>
 </head>
-<body class="bg-slate-900 text-white min-h-screen flex items-center justify-center p-4">
+<body class="text-slate-200 min-h-screen flex items-center justify-center p-4">
 
-    <div class="flex flex-col md:flex-row gap-6 max-w-6xl w-full h-[85vh]">
+    <div class="flex flex-col md:flex-row gap-6 max-w-7xl w-full h-[85vh]">
         
-        <div id="app-container" class="relative flex-[3] bg-black rounded-3xl overflow-hidden border-4 border-pink-500/30 shadow-2xl">
+        <div id="app-container" class="relative flex-[3] bg-slate-950 rounded-3xl overflow-hidden border-2 border-sky-500/20 shadow-[0_0_50px_-12px_rgba(56,189,248,0.3)]">
             <video id="webcam" class="w-full h-full object-cover" autoplay playsinline></video>
-            <canvas id="output_canvas" class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
+            <canvas id="output_canvas" class="absolute top-0 left-0 w-full h-full pointer-events-none z-10"></canvas>
             
-            <div id="status-overlay" class="absolute top-5 right-5 flex flex-col items-end gap-2">
-                <div id="pose-label" class="opacity-0 transition-all duration-300 text-3xl font-black text-white bg-pink-500/80 px-6 py-2 rounded-2xl backdrop-blur-md shadow-lg">
-                    준비 중...
+            <div id="status-overlay" class="absolute top-6 left-6 z-20">
+                <div id="pose-label" class="opacity-0 transition-all duration-300 text-2xl font-black text-sky-400 bg-slate-900/80 px-5 py-2 rounded-full border border-sky-500/30 backdrop-blur-md">
+                    탐색 중...
                 </div>
             </div>
 
-            <div id="start-screen" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-20">
-                <h1 class="text-4xl font-black mb-6 text-pink-500">Kawaii Vision AI</h1>
-                <button id="start-btn" class="px-10 py-4 bg-pink-500 rounded-full text-xl font-bold hover:scale-105 transition-transform shadow-xl">
-                    카메라 시작하기
+            <div id="emoji-filter" class="filter-emoji hidden"></div>
+
+            <div id="start-screen" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 z-50">
+                <h1 class="text-5xl font-black mb-4 text-white">SKY <span class="text-sky-500">VISION</span></h1>
+                <p class="text-slate-400 mb-8 font-medium">Professional AI Photography</p>
+                <button id="start-btn" class="px-12 py-4 bg-sky-500 hover:bg-sky-400 text-white rounded-full text-xl font-bold transition-all hover:shadow-[0_0_20px_rgba(56,189,248,0.5)] active:scale-95">
+                    STUDIO START
                 </button>
             </div>
 
-            <div id="flash" class="absolute inset-0 bg-white opacity-0 pointer-events-none z-30 transition-opacity duration-100"></div>
+            <div id="flash" class="absolute inset-0 bg-white opacity-0 pointer-events-none z-50 transition-opacity duration-100"></div>
         </div>
 
-        <div class="flex-1 bg-slate-800/50 rounded-3xl p-4 flex flex-col border border-white/10 shadow-xl overflow-hidden">
-            <h3 class="text-center font-bold text-pink-400 mb-4 border-b border-white/10 pb-2">📸 스티커 갤러리</h3>
+        <div class="flex-1 bg-slate-900/50 rounded-3xl p-5 flex flex-col border border-white/5 shadow-2xl overflow-hidden">
+            <h3 class="text-sm font-bold text-sky-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <span class="w-2 h-2 bg-sky-500 rounded-full animate-pulse"></span> Gallery Archive
+            </h3>
             <div id="gallery-list" class="flex flex-col gap-4 overflow-y-auto custom-scrollbar pr-2">
                 </div>
         </div>
     </div>
 
-    <div id="photo-modal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-3 rounded-2xl max-w-2xl w-full">
-            <img id="captured-image" class="w-full rounded-xl border border-slate-200">
-            <div class="flex justify-between mt-4 px-2">
-                <button id="close-modal" class="text-slate-500 font-bold px-4 py-2">닫기</button>
-                <a id="download-link" class="bg-pink-500 text-white px-8 py-2 rounded-xl font-bold">저장하기</a>
+    <div id="photo-modal" class="hidden fixed inset-0 bg-slate-950/95 z-[100] flex items-center justify-center p-6">
+        <div class="bg-slate-900 p-2 rounded-3xl max-w-2xl w-full border border-white/10 shadow-2xl">
+            <img id="captured-image" class="w-full rounded-2xl">
+            <div class="flex justify-between items-center p-4">
+                <button id="close-modal" class="text-slate-400 hover:text-white transition-colors">CANCEL</button>
+                <a id="download-link" class="bg-sky-500 text-white px-8 py-3 rounded-xl font-bold hover:bg-sky-400 transition-all">DOWNLOAD</a>
             </div>
         </div>
     </div>
@@ -67,28 +75,28 @@
         const capturedImage = document.getElementById('captured-image');
         const closeModal = document.getElementById('close-modal');
         const downloadLink = document.getElementById('download-link');
+        const emojiFilter = document.getElementById('emoji-filter');
 
         let lastShotTime = 0;
+        let faceLandmarks = null;
 
         // 1. MediaPipe 설정
         const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-        hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
+        hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.7, minTrackingConfidence: 0.7 });
 
         const faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
-        faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
+        faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.7, minTrackingConfidence: 0.7 });
 
-        // 2. 사진 촬영 로직
+        // 2. 촬영 및 갤러리 추가
         function takePhotoAuto(poseName) {
             const now = Date.now();
-            if (now - lastShotTime < 2000) return; // 2초 쿨타임
+            if (now - lastShotTime < 2000) return;
             lastShotTime = now;
 
-            // 플래시 효과
             const flash = document.getElementById('flash');
             flash.style.opacity = "1";
             setTimeout(() => flash.style.opacity = "0", 100);
 
-            // 캡쳐
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = videoElement.videoWidth;
             tempCanvas.height = videoElement.videoHeight;
@@ -96,22 +104,32 @@
             tempCtx.translate(tempCanvas.width, 0);
             tempCtx.scale(-1, 1);
             tempCtx.drawImage(videoElement, 0, 0);
+            
             const dataUrl = tempCanvas.toDataURL('image/png');
-
-            // 갤러리에 추가
             const item = document.createElement('div');
-            item.className = "relative cursor-pointer hover:scale-105 transition-all rounded-xl overflow-hidden shadow-lg border-2 border-pink-500/20";
-            item.innerHTML = `<img src="${dataUrl}" class="w-full"><div class="absolute bottom-0 bg-pink-500/80 w-full text-[10px] text-center py-1">${poseName}</div>`;
+            item.className = "relative cursor-pointer hover:border-sky-500 border-2 border-transparent rounded-2xl overflow-hidden transition-all shadow-lg bg-slate-800";
+            item.innerHTML = `<img src="${dataUrl}" class="w-full opacity-80 hover:opacity-100 transition-opacity">
+                              <div class="absolute bottom-2 left-2 bg-sky-500 text-[10px] font-bold text-white px-2 py-1 rounded-md">${poseName}</div>`;
             item.onclick = () => {
                 capturedImage.src = dataUrl;
                 downloadLink.href = dataUrl;
-                downloadLink.download = `kawaii_${poseName}.png`;
+                downloadLink.download = `SkyVision_${Date.now()}.png`;
                 photoModal.classList.remove('hidden');
             };
             galleryList.prepend(item);
         }
 
-        // 3. 자세 감지 통합 로직
+        // 3. 필터 제어
+        function showFilter(emoji, x, y) {
+            emojiFilter.innerText = emoji;
+            emojiFilter.classList.remove('hidden');
+            // 거울 모드 대응 좌표 변환
+            emojiFilter.style.right = (x * 100) + "%";
+            emojiFilter.style.top = (y * 100) + "%";
+        }
+        function hideFilter() { emojiFilter.classList.add('hidden'); }
+
+        // 4. 메인 로직
         function onResults(results) {
             canvasElement.width = videoElement.videoWidth;
             canvasElement.height = videoElement.videoHeight;
@@ -119,25 +137,38 @@
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
             
             let detectedPose = "";
+            hideFilter();
 
             if (results.multiHandLandmarks) {
                 for (let i = 0; i < results.multiHandLandmarks.length; i++) {
-                    const landmarks = results.multiHandLandmarks[i];
-                    const label = results.multiHandedness[i].label; // Left or Right
-                    drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: '#ec4899', lineWidth: 4});
+                    const h = results.multiHandLandmarks[i];
+                    const side = results.multiHandedness[i].label; // Left/Right (거울 반대)
                     
-                    const isIndexUp = landmarks[8].y < landmarks[6].y;
-                    const isMiddleUp = landmarks[12].y < landmarks[10].y;
-                    const isRingDown = landmarks[16].y > landmarks[14].y;
-                    const isPinkyDown = landmarks[20].y > landmarks[18].y;
+                    // 랜드마크 그리기 (스카이 블루 테마)
+                    drawConnectors(canvasCtx, h, HAND_CONNECTIONS, {color: '#38bdf8', lineWidth: 2});
+                    drawLandmarks(canvasCtx, h, {color: '#ffffff', lineWidth: 1, radius: 2});
 
-                    // 뻐큐 판별 (중지만 펴짐)
+                    const isIndexUp = h[8].y < h[6].y;
+                    const isMiddleUp = h[12].y < h[10].y;
+                    const isRingDown = h[16].y > h[14].y;
+                    const isPinkyDown = h[20].y > h[18].y;
+
+                    // 뻐큐 (필터: 😈)
                     if (isMiddleUp && !isIndexUp && isRingDown && isPinkyDown) {
                         detectedPose = "뻐큐 🖕";
+                        showFilter("😈", h[12].x, h[12].y - 0.1);
                     } 
-                    // 브이 판별
+                    // 브이
                     else if (isIndexUp && isMiddleUp && isRingDown && isPinkyDown) {
-                        detectedPose = (label === "Left" ? "오른손 브이 ✌️" : "왼손 브이 ✌️"); // 거울모드 반대
+                        detectedPose = (side === "Left" ? "오른손 브이 ✌️" : "왼손 브이 ✌️");
+                    }
+                    // 볼콕 인식 로직 (검지 끝이 볼 랜드마크 근처일 때)
+                    if (faceLandmarks) {
+                        const leftCheek = faceLandmarks[234];
+                        const rightCheek = faceLandmarks[454];
+                        const distL = Math.hypot(h[8].x - leftCheek.x, h[8].y - leftCheek.y);
+                        const distR = Math.hypot(h[8].x - rightCheek.x, h[8].y - rightCheek.y);
+                        if (distL < 0.05 || distR < 0.05) detectedPose = "볼콕 ✨";
                     }
                 }
             }
@@ -153,24 +184,23 @@
         }
 
         function onFaceResults(results) {
-            if (results.multiFaceLandmarks) {
-                for (const landmarks of results.multiFaceLandmarks) {
-                    // 윙크 감지
-                    const leftEye = Math.abs(landmarks[159].y - landmarks[145].y);
-                    const rightEye = Math.abs(landmarks[386].y - landmarks[374].y);
-                    
-                    if (leftEye < 0.012 && rightEye > 0.025) updateFacePose("오른쪽 윙크 😉");
-                    else if (rightEye < 0.012 && leftEye > 0.025) updateFacePose("왼쪽 윙크 😉");
+            if (results.multiFaceLandmarks && results.multiFaceLandmarks[0]) {
+                faceLandmarks = results.multiFaceLandmarks[0];
+                const f = faceLandmarks;
+                
+                const leftEye = Math.abs(f[159].y - f[145].y);
+                const rightEye = Math.abs(f[386].y - f[374].y);
+                const mouthDist = Math.abs(f[13].y - f[14].y);
+                const tilt = f[1].x - f[152].x;
 
-                    // 고개 기울임
-                    const tilt = landmarks[1].x - landmarks[152].x;
-                    if (tilt > 0.05) updateFacePose("오른쪽 갸우뚱? ↘️");
-                    else if (tilt < -0.05) updateFacePose("왼쪽 갸우뚱? ↙️");
-
-                    // 혀 내밀기 (입술 거리)
-                    const mouthDist = Math.abs(landmarks[13].y - landmarks[14].y);
-                    if (mouthDist > 0.04) updateFacePose("메롱~ 😛");
+                if (leftEye < 0.012 && rightEye > 0.025) updateFacePose("오른쪽 윙크 😉");
+                else if (rightEye < 0.012 && leftEye > 0.025) updateFacePose("왼쪽 윙크 😉");
+                else if (tilt > 0.06) {
+                    updateFacePose("오른쪽 갸우뚱 🎀");
+                    showFilter("🎀", f[10].x, f[10].y - 0.15);
                 }
+                else if (tilt < -0.06) updateFacePose("왼쪽 갸우뚱 ↙️");
+                else if (mouthDist > 0.045) updateFacePose("메롱~ 😛");
             }
         }
 
@@ -187,7 +217,6 @@
             startScreen.classList.add('hidden');
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             videoElement.srcObject = stream;
-            
             async function loop() {
                 await hands.send({image: videoElement});
                 await faceMesh.send({image: videoElement});
@@ -195,7 +224,6 @@
             }
             loop();
         };
-
         closeModal.onclick = () => photoModal.classList.add('hidden');
     </script>
 </body>
