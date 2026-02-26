@@ -114,7 +114,7 @@
 
         const stages = [
             { name: "Stage 1: 기초 반응", problems: [
-                { text: "''오른쪽' 귀 옆에 브이를 하세요.", check: (h, f) => h.some(hand => hand.side==='Right' && hand.v && Math.hypot(hand.pos[8].x - f[234].x, hand.pos[8].y - f[234].y) < 0.12) },
+                { text: "'오른쪽' 귀 옆에 브이를 하세요.", check: (h, f) => h.some(hand => hand.side==='Right' && hand.v && Math.hypot(hand.pos[8].x - f[234].x, hand.pos[8].y - f[234].y) < 0.12) },
                 { text: "고개를 '왼쪽'으로 45도 기울이세요.", check: (h, f) => (f[1].x - f[152].x) > 0.05 }
             ]},
             { name: "Stage 2: 가속 테스트", problems: [
