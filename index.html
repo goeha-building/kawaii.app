@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI가 알려주는 뇌건강 순발력 테스트</title>
+    <title>AI 기반 뇌 연령 및 순발력 테스트</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
@@ -11,14 +11,10 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
         body { font-family: 'Pretendard', sans-serif; background-color: #020617; overflow: hidden; }
-        /* 다시 거울 모드로 복구 (사용자에게 익숙한 방향) */
         video, canvas { transform: rotateY(180deg); object-fit: cover; }
         .timer-font { font-family: monospace; }
         .flash-active { animation: flash-anim 0.2s ease-out; }
         @keyframes flash-anim { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
-        .hamster-laugh { animation: shake 0.5s infinite; }
-        @keyframes shake { 0% { transform: rotate(10deg); } 50% { transform: rotate(-10deg); } 100% { transform: rotate(10deg); } }
-        .sticker { position: absolute; font-size: 3.5rem; pointer-events: none; z-index: 45; filter: drop-shadow(0 0 10px rgba(255,255,255,0.5)); }
     </style>
 </head>
 <body class="text-slate-200 w-screen h-screen">
@@ -26,60 +22,68 @@
     <div id="start-screen" class="absolute inset-0 z-[100] bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
         <div class="max-w-2xl">
             <h1 class="text-5xl font-black mb-4 tracking-tighter text-white">🧠 나의 뇌 나이는 몇 살?</h1>
-            <h2 class="text-xl text-sky-400 font-bold mb-8 italic">실시간 뉴런 활성화 테스트</h2>
-            <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl text-left space-y-4 mb-8 shadow-2xl">
-                <p class="text-slate-300">디지털 중독으로 <span class="text-rose-500 font-bold">'틀딱'</span>이 되어가고 계십니까?</p>
-                <p class="text-slate-300">1분도 소요되지 않는 간단한 테스트로 <span class="text-rose-500 font-bold">뇌손상</span>을 예방하십시오.</p>
-                <p class="text-slate-300"><span class="text-rose-500 font-bold">효과 : </span>자신감이 오르고 신체가 건강해지며 테스토스테론이 폭발해 알파메일/피메일이 된다.</p>
-                <p class="text-slate-300">화면에 나오는 지시사항을 <strong>사용자의 왼쪽/오른쪽 기준</strong>으로 빠르게 수행해주십시오.</p>
-                <p class="text-xs text-slate-500 text-center border-t border-slate-800 pt-4">* PC 환경 권장 (거울 모드가 아닌 실제 방향대로 움직이세요)</p>            </div>
-            <button id="start-btn" class="px-20 py-6 bg-sky-600 rounded-full text-2xl font-black hover:bg-sky-500 transition-all hover:scale-105 shadow-[0_10px_40px_rgba(2,132,199,0.5)]">
-                테스트 시작
+            <h2 class="text-xl text-sky-400 font-bold mb-8 italic">실시간 AI 순발력 및 뉴런 활성화 테스트</h2>
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl text-left space-y-4 mb-8 shadow-2xl">
+                <p class="text-slate-300 leading-relaxed">
+                    디지털 중독과 숏폼 콘텐츠에 절여진 현대인들의 뇌는 실제 나이보다 훨씬 빠르게 <span class="text-rose-500 font-bold">'틀딱'</span>화 되고 있습니다. 
+                </p>
+                <p class="text-slate-300">
+                    본 테스트는 정교한 <strong>Google Mediapipe AI</strong>를 통해 신체 반응 속도를 측정합니다. 뇌가 쌩쌩할수록 반응 속도가 빨라지며, 이때 분비되는 <span class="text-sky-400">테스토스테론</span>은 당신을 진정한 <strong>알파 휴먼</strong>으로 만들어 줄 것입니다.
+                </p>
+                <p class="text-xs text-slate-500 text-center border-t border-slate-800 pt-4">
+                    * 정확한 측정을 위해 PC 환경과 웹캠 권장.
+                </p>
+            </div>
+            <button id="start-btn" class="group relative px-16 py-5 bg-sky-600 rounded-full text-2xl font-black hover:bg-sky-500 transition-all hover:scale-105 shadow-[0_0_30px_rgba(2,132,199,0.4)]">
+                테스트 시작 (무료)
+                <div class="absolute -top-2 -right-2 bg-rose-500 text-xs px-2 py-1 rounded-md animate-bounce">HOT</div>
             </button>
         </div>
     </div>
 
     <div id="app-container" class="hidden relative w-full h-full bg-black">
         <video id="webcam" class="absolute inset-0 w-full h-full" autoplay playsinline></video>
-        <canvas id="output_canvas" class="absolute inset-0 w-full h-full z-10 pointer-events-none opacity-40"></canvas>
+        <canvas id="output_canvas" class="absolute inset-0 w-full h-full z-10 pointer-events-none opacity-50"></canvas>
         
-        <div id="sticker-layer" class="absolute inset-0 z-40 pointer-events-none"></div>
-
-        <div class="absolute top-10 left-0 right-0 z-20 flex flex-col items-center pointer-events-none px-4">
-            <div id="stage-info" class="text-sky-400 font-black text-2xl mb-2 tracking-[0.3em] uppercase opacity-80">Stage 0</div>
-            <div id="instruction-box" class="bg-black/70 backdrop-blur-2xl border border-white/20 px-12 py-6 rounded-[3rem] text-4xl font-black text-center max-w-full shadow-2xl transition-all duration-300">
-                L O A D I N G . . .
+        <div class="absolute top-10 left-0 right-0 z-20 flex flex-col items-center pointer-events-none">
+            <div id="stage-info" class="text-sky-400 font-bold text-xl mb-2 tracking-widest uppercase">Stage 1: 기초 반응 테스트</div>
+            <div id="instruction-box" class="bg-black/40 backdrop-blur-md border border-white/20 px-8 py-4 rounded-3xl text-3xl font-black text-center max-w-[80%] transition-all">
+                잠시만 기다려 주세요...
             </div>
-            <div id="timer" class="mt-6 text-5xl font-black timer-font text-white/50 tracking-tighter">00.00s</div>
+            <div id="timer" class="mt-4 text-4xl font-black timer-font text-white/70">00.00s</div>
         </div>
 
-        <div id="fail-stack" class="absolute top-10 left-10 z-20 flex gap-2 text-6xl text-rose-600 font-black"></div>
+        <div id="fail-stack" class="absolute top-10 left-10 z-20 flex gap-2 text-5xl text-rose-600 font-black"></div>
+
+        <div id="humiliation-layer" class="hidden absolute inset-0 z-30 pointer-events-none flex items-center justify-center">
+             <div class="filter-item text-8xl absolute top-1/4 left-1/4 animate-bounce">✨</div>
+             <div class="filter-item text-8xl absolute top-1/3 right-1/4 animate-pulse">💖</div>
+             <div class="filter-item text-8xl absolute bottom-1/4 left-1/3 animate-spin">🌸</div>
+        </div>
+
         <div id="flash" class="absolute inset-0 bg-white opacity-0 z-[100] pointer-events-none"></div>
     </div>
 
     <div id="result-modal" class="hidden fixed inset-0 z-[200] bg-slate-950/98 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-white/10 p-10 rounded-[4rem] max-w-5xl w-full relative shadow-[0_0_150px_rgba(56,189,248,0.2)]">
+        <div class="bg-slate-900 border border-white/10 p-8 rounded-[40px] max-w-4xl w-full relative shadow-2xl overflow-hidden">
+            <img src="https://i.imgur.com/vH0HjD7.png" class="absolute -top-4 -right-4 w-32 h-32 rotate-12 z-10" alt="비웃는 고양이">
             
-            <div class="absolute -top-20 -right-16 w-56 h-56 hamster-laugh z-[210]">
-                <img src="https://i.imgur.com/vH0HjD7.png" id="laugh-img" class="w-full h-full rounded-full border-8 border-rose-500 shadow-2xl" alt="비웃는 햄스터">
-            </div>
-            
-            <div class="flex flex-col md:flex-row gap-12 items-center">
+            <div class="flex flex-col md:flex-row gap-8 items-center">
                 <div class="flex-1 relative">
-                    <div class="absolute -top-6 -left-6 bg-rose-500 text-white px-6 py-2 font-black rounded-2xl z-10 animate-bounce tracking-tight text-xl">그렇게 귀여워지고 싶었니?</div>
-                    <img id="result-image" class="w-full rounded-[2.5rem] border-4 border-sky-500 shadow-3xl">
+                    <div class="absolute -top-4 -left-4 bg-rose-500 text-white px-4 py-2 font-black rounded-lg z-10 animate-pulse underline">애교쟁이 검거!</div>
+                    <img id="result-image" class="w-full rounded-2xl border-4 border-sky-500 shadow-2xl shadow-sky-500/20">
                 </div>
                 
                 <div class="flex-1 text-center md:text-left">
-                    <h3 id="result-title" class="text-4xl font-black text-white mb-4 italic uppercase">오잉?? 귀여운 표정의 애교쟁이 적발 📸</h3>
-                    <p id="result-desc1" class="text-slate-400 mb-8 text-lg">뇌건강 테스트를 하랬더만<span class="text-sky-400 font-bold">'기습 필살 애교'</span> 를 부리다니...당차십니다.</p>
-                    <p id="result-desc2" class="text-slate-400 mb-8 text-lg">당신은 제정신이 아닙니다. 이게 뭐하는 짓입니까?</p>
-                    <p id="result-desc3" class="text-slate-400 mb-8 text-lg">당신은 <span class="text-sky-400 font-bold">'테토'도, '알파'도 아닙니다.</span> 그저 초 카와이 애교쟁이로 전락해버렸습니다.</p>
+                    <h3 id="result-title" class="text-4xl font-black text-white mb-4 italic">귀여운 표정을 짓고 있는<br>애교쟁이 적발! 📸</h3>
+                    <p id="result-desc" class="text-slate-400 mb-8 leading-relaxed">
+                        와우! 당신의 뇌는 너무나도 <span class="text-sky-400 font-bold">말랑말랑</span>해서 자신도 모르게 이런 '초 카와이'한 포즈를 취해버렸네요! 이 사진은 당신의 순발력과 귀여움을 동시에 증명합니다.
+                    </p>
                     
-                    <div class="grid grid-cols-1 gap-4">
-                        <a id="save-btn" class="py-5 bg-sky-600 text-white rounded-[1.5rem] font-black text-2xl text-center hover:bg-sky-400 transition-all shadow-lg active:scale-95">사진 저장</a>
-                        <a href="mailto:goeha1379@gmail.com" class="py-5 bg-slate-800 text-slate-300 rounded-[1.5rem] font-black text-xl text-center hover:bg-slate-700 transition-all">💌 제작자에게 자랑하기</a>
-                        <button id="angry-btn" class="py-5 border-2 border-rose-500/50 text-rose-400 rounded-[1.5rem] font-black text-xl hover:bg-rose-500/20 transition-all">이 굴욕을 제작자에게 앙갚음하기</button>
+                    <div class="flex flex-col gap-3">
+                        <a id="save-btn" class="w-full py-4 bg-sky-600 text-white rounded-2xl font-bold text-center hover:bg-sky-500 transition-colors cursor-pointer">📸 사진 저장하기</a>
+                        <a href="mailto:goeha1379@gmail.com" class="w-full py-4 bg-slate-800 text-slate-300 rounded-2xl font-bold text-center hover:bg-slate-700 transition-colors">💌 제작자에게 귀여움 자랑하기</a>
+                        <button id="angry-btn" class="w-full py-4 border-2 border-rose-500/50 text-rose-400 rounded-2xl font-bold hover:bg-rose-500/10 transition-colors">💢 제작자에게 분노의 빠큐 날리기</button>
                     </div>
                 </div>
             </div>
@@ -87,16 +91,6 @@
     </div>
 
     <script type="module">
-        // 전역 변수 먼저 선언 (오류 방지)
-        let currentHands = []; 
-        let currentFace = null;
-        let currentStage = 1;
-        let currentProblem = 0;
-        let startTime = 0;
-        let isProblemActive = false;
-        let isFinalStage = false;
-        let isAngryMode = false;
-
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('output_canvas');
         const ctx = canvas.getContext('2d');
@@ -105,143 +99,178 @@
         const appContainer = document.getElementById('app-container');
         const instructionBox = document.getElementById('instruction-box');
         const timerDisplay = document.getElementById('timer');
-        const stickerLayer = document.getElementById('sticker-layer');
+        const stageInfo = document.getElementById('stage-info');
+        const failStack = document.getElementById('fail-stack');
         const resultModal = document.getElementById('result-modal');
         const resultImage = document.getElementById('result-image');
         const flash = document.getElementById('flash');
 
-        const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
-        hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.8, minTrackingConfidence: 0.8 });
-        const faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
-        faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.8, minTrackingConfidence: 0.8 });
+        let currentStage = 1;
+        let currentProblem = 0;
+        let startTime = 0;
+        let isProblemActive = false;
+        let fails = 0;
+        let isFinalStage = false;
+        let isAngryMode = false;
 
+        // [MediaPipe 설정]
+        const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+        hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.75, minTrackingConfidence: 0.75 });
+        const faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
+        faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.75, minTrackingConfidence: 0.75 });
+
+        // [스테이지 데이터]
         const stages = [
-            { name: "Stage 1: 기초 반응", problems: [
-                { text: "'오른쪽' 귀 옆에 브이를 하세요.", check: (h, f) => h.some(hand => hand.side==='Right' && hand.v && Math.hypot(hand.pos[8].x - f[234].x, hand.pos[8].y - f[234].y) < 0.12) },
-                { text: "고개를 '왼쪽'으로 45도 기울이세요.", check: (h, f) => (f[1].x - f[152].x) > 0.05 }
+            { name: "Stage 1: 기초 인지력", problems: [
+                { text: "검지와 중지 손가락을 펴서 오른쪽 귀 옆에 대세요.", check: (h, f) => h.some(hand => hand.side==='Left' && hand.v && Math.hypot(hand.pos[8].x - f[234].x, hand.pos[8].y - f[234].y) < 0.1) },
+                { text: "고개를 오른쪽으로 45도 기울이세요.", check: (h, f) => (f[1].x - f[152].x) > 0.06 }
             ]},
-            { name: "Stage 2: 가속 테스트", problems: [
-                { text: "오른손 브이를 하며 고개를 오른쪽으로 기울이세요.", check: (h, f) => h.some(hand => hand.v) && (f[1].x - f[152].x) < -0.05 }
+            { name: "Stage 2: 전두엽 가속 테스트", problems: [
+                { text: "왼손 브이를 하면서 고개를 왼쪽으로 기울이세요.", check: (h, f) => h.some(hand => hand.side==='Right' && hand.v) && (f[1].x - f[152].x) < -0.06 }
             ]},
-            { name: "Final Stage: 뉴런 폭발", problems: [
-                { text: "오른손 검지손가락으로 볼 찌르기 + 왼손 브이 + 오른쪽으로 고개 기울이기 + 왼쪽 눈 감기 + 혀 내밀기", isFinal: true, check: (h, f) => {
-                    const hasV = h.some(hand => hand.v);
-                    const hasCheek = h.some(hand => Math.hypot(hand.pos[8].x - f[234].x, hand.pos[8].y - f[234].y) < 0.1 || Math.hypot(hand.pos[8].x - f[454].x, hand.pos[8].y - f[454].y) < 0.1);
-                    const isTilt = Math.abs(f[1].x - f[152].x) > 0.04;
-                    const leftEyeHeight = Math.abs(f[159].y - f[145].y);
-                    const rightEyeHeight = Math.abs(f[386].y - f[374].y);
-                    const isWink = (leftEyeHeight < 0.016 || rightEyeHeight < 0.016);
+            { name: "Final Stage: 뉴런 리미트 해제", problems: [
+                { text: "검지로 볼 찌르기 + 왼손 브이 + 오른쪽 갸우뚱 + 왼쪽 눈 감기 + 혀 내밀기", isFinal: true, check: (h, f) => {
+                    const hasV = h.some(hand => hand.side==='Right' && hand.v);
+                    const hasCheek = h.some(hand => Math.hypot(hand.pos[8].x - f[234].x, hand.pos[8].y - f[234].y) < 0.08 || Math.hypot(hand.pos[8].x - f[454].x, hand.pos[8].y - f[454].y) < 0.08);
+                    const isTilt = (f[1].x - f[152].x) > 0.05;
+                    const isWink = Math.abs(f[159].y - f[145].y) < 0.012;
                     const isTongue = Math.abs(f[13].y - f[14].y) > 0.04;
                     return hasV && hasCheek && isTilt && isWink && isTongue;
                 }}
             ]}
         ];
 
-        function spawnStickers() {
-            stickerLayer.innerHTML = '';
-            const emojis = ['❤️', '⭐', '✨', '💖', '🌸', '🍭', '🎀', '🍬'];
-            for(let i=0; i<20; i++) {
-                const s = document.createElement('div');
-                s.className = 'sticker';
-                s.innerText = emojis[Math.floor(Math.random()*emojis.length)];
-                s.style.left = Math.random()*90 + '%';
-                s.style.top = Math.random()*90 + '%';
-                s.style.transform = `rotate(${Math.random()*360}deg)`;
-                stickerLayer.appendChild(s);
+        // [핵심 로직]
+        function nextProblem() {
+            isProblemActive = false;
+            if (currentProblem >= stages[currentStage-1].problems.length) {
+                currentStage++;
+                currentProblem = 0;
             }
+            if (currentStage > 3) return;
+
+            const prob = stages[currentStage-1].problems[currentProblem];
+            stageInfo.innerText = stages[currentStage-1].name;
+            instructionBox.innerText = prob.text;
+            instructionBox.classList.remove('text-green-400');
+            
+            setTimeout(() => {
+                startTime = Date.now();
+                isProblemActive = true;
+                if (prob.isFinal) isFinalStage = true;
+            }, 500);
         }
 
-        function capturePhoto() {
+        function captureHumiliation(poseName) {
             flash.classList.add('flash-active');
             setTimeout(() => flash.classList.remove('flash-active'), 200);
+
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = video.videoWidth; tempCanvas.height = video.videoHeight;
             const tCtx = tempCanvas.getContext('2d');
             tCtx.translate(tempCanvas.width, 0); tCtx.scale(-1, 1);
             tCtx.drawImage(video, 0, 0);
-            tCtx.setTransform(1, 0, 0, 1, 0, 0);
-            tCtx.font = "80px Arial";
-            for(let i=0; i<15; i++) {
-                tCtx.fillText(['❤️','✨','💖','⭐'][Math.floor(Math.random()*4)], Math.random()*tempCanvas.width, Math.random()*tempCanvas.height);
-            }
+            
             const dataUrl = tempCanvas.toDataURL('image/png');
             resultImage.src = dataUrl;
             document.getElementById('save-btn').href = dataUrl;
-            document.getElementById('save-btn').download = "my_cute_brain_result.png";
+            document.getElementById('save-btn').download = "my_cute_brain.png";
+            
+            if(isAngryMode) {
+                document.getElementById('result-title').innerHTML = "저는 귀염둥이에용<br>쓰다듬어주세용 💖";
+                document.getElementById('result-desc').innerText = "분노조차 애교로 승화시키는 당신! 제작자의 마음을 훔치셨군요?";
+            }
+
             resultModal.classList.remove('hidden');
         }
 
-        function nextProblem() {
-            isProblemActive = false;
-            if (currentStage > stages.length) return;
-            if (currentProblem >= stages[currentStage-1].problems.length) {
-                currentStage++; currentProblem = 0;
-            }
-            if (currentStage > stages.length) return;
-            const prob = stages[currentStage-1].problems[currentProblem];
-            document.getElementById('stage-info').innerText = stages[currentStage-1].name;
-            instructionBox.innerText = prob.text;
-            setTimeout(() => { startTime = Date.now(); isProblemActive = true; if(prob.isFinal) isFinalStage = true; }, 500);
-        }
+        // [감지 처리]
+        let currentHands = [];
+        let currentFace = null;
 
         hands.onResults(results => {
             currentHands = (results.multiHandLandmarks || []).map((lm, i) => ({
-                pos: lm, side: results.multiHandedness[i].label,
+                pos: lm,
+                side: results.multiHandedness[i].label,
                 v: lm[8].y < lm[6].y && lm[12].y < lm[10].y && lm[16].y > lm[14].y,
                 fuck: lm[12].y < lm[10].y && lm[8].y > lm[6].y && lm[16].y > lm[14].y
             }));
             checkLogic();
         });
 
-        faceMesh.onResults(results => { 
-            currentFace = (results.multiFaceLandmarks || [])[0]; 
-            checkLogic(); 
+        faceMesh.onResults(results => {
+            currentFace = (results.multiFaceLandmarks || [])[0];
+            checkLogic();
         });
 
         function checkLogic() {
             if (!isProblemActive || !currentFace) return;
+
+            // 빠큐 모드 체크
             if (isAngryMode) {
-                if (currentHands.some(h => h.fuck)) {
-                    isProblemActive = false; spawnStickers();
-                    document.getElementById('result-title').innerHTML = "저는 귀염둥이에용💖💖💖 화 안났어용✨";
-                    capturePhoto();
+                const isFuck = currentHands.some(h => h.fuck);
+                if (isFuck) {
+                    isProblemActive = false;
+                    document.getElementById('humiliation-layer').classList.remove('hidden');
+                    captureHumiliation("분노의 귀염둥이");
                 }
                 return;
             }
+
             const prob = stages[currentStage-1].problems[currentProblem];
-            if (prob && prob.check(currentHands, currentFace)) {
+            if (prob.check(currentHands, currentFace)) {
                 isProblemActive = false;
+                instructionBox.innerText = "⭕ 미션 성공!";
+                instructionBox.classList.add('text-green-400');
+                
                 if (prob.isFinal) {
-                    instructionBox.innerText = "저는 세상에서 제일 귀엽습니다앙✨✨";
-                    spawnStickers();
-                    setTimeout(capturePhoto, 800);
+                    instructionBox.innerText = "내 애교 어때? 뿌잉뿌잉 ✨";
+                    document.getElementById('humiliation-layer').classList.remove('hidden');
+                    setTimeout(() => captureHumiliation("초특급 애교쟁이"), 800);
+                } else {
+                    setTimeout(() => { currentProblem++; nextProblem(); }, 1500);
+                }
+            }
+
+            // 타이머 업데이트
+            const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+            timerDisplay.innerText = elapsed + "s";
+            
+            // 2단계 시간 초과 가짜 로직 (적당히 7초 넘으면 실패 처리)
+            if (currentStage === 2 && elapsed > 7.00 && !isFinalStage) {
+                fails++;
+                failStack.innerText += "X";
+                if (fails >= 3) {
+                    alert("당신의 뇌는 제작자가 예상하지 못했을 정도로 늙다리입니다. 싸이버 요양원 예약을 추천드립니다.");
+                    location.reload();
                 } else {
                     currentProblem++; nextProblem();
                 }
             }
-            timerDisplay.innerText = ((Date.now() - startTime)/1000).toFixed(2) + "s";
         }
 
+        // [이벤트]
         startBtn.onclick = async () => {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                video.srcObject = stream;
-                startScreen.classList.add('hidden'); appContainer.classList.remove('hidden');
-                async function loop() { 
-                    await hands.send({image: video}); 
-                    await faceMesh.send({image: video}); 
-                    requestAnimationFrame(loop); 
-                }
-                loop(); 
-                nextProblem();
-            } catch (err) {
-                alert("카메라 권한을 허용해주세요!");
+            startScreen.classList.add('hidden');
+            appContainer.classList.remove('hidden');
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            
+            async function loop() {
+                await hands.send({image: video});
+                await faceMesh.send({image: video});
+                requestAnimationFrame(loop);
             }
+            loop();
+            nextProblem();
         };
 
         document.getElementById('angry-btn').onclick = () => {
-            resultModal.classList.add('hidden'); isAngryMode = true; isProblemActive = true;
-            instructionBox.innerText = "제작자에게 중지손가락을 날려 분노를 표출하십시오.";
+            resultModal.classList.add('hidden');
+            document.getElementById('humiliation-layer').classList.add('hidden');
+            isAngryMode = true;
+            instructionBox.innerText = "분노를 감지 중입니다... 제작자에게 날릴 빠큐를 준비하세요!";
+            isProblemActive = true;
         };
     </script>
 </body>
